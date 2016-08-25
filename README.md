@@ -1,6 +1,3 @@
-<<<<<<< ea8e4ff0bd7fac34a6eade25817e5ba52f23eaf3
-# moving-to-terraform
-=======
 # Moving to Terraform
 
 ## Introduction
