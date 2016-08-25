@@ -372,4 +372,3 @@ salt-call state.highstate
 
 Terraform is probably one of the best tools out there to handle resources in Cloud Providers.
 Is easy, well documented, there are examples everywhere and works great :)
->>>>>>> tutorial complete.
