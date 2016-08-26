@@ -2,23 +2,24 @@
 
 ## Introduction
 
-Recently a Development Company contact us [flugel.it](http://flugel.it/) in order to
-help them to handle a Site running in AWS WebServices. Particularity of this Site, based
-in a popular CMS, using a LAMP stack together with RDS and ElasticCache, is that traffic
-varies quite a bit, when they have events.
+Recently a development company approached us to help them with a Site running on 
+AWS WebServices. This site in particular, is on a very popular CMS, using a LAMP
+stack together with RDS and ElasticCache, traffic varies quite a lot, specially 
+when transmitting live events.
 
 ## Challenge and First Steps
 
 Our first challenge was to move Application Servers from an ugly CloudFormation code to
-Terraform. The problem here is that as I already mention the Platform is already in
-production and using RDS and ElasticSearch, placed inside a dedicated VPC, so in order
-to do this migration without affecting users we needed to integrate Terraform with
-some resources already created in AWS.
+Terraform. The problem here is that as I mentioned before, their platform is already in
+production, using RDS and ElasticSearch and inside a dedicated VPC so, in order to have a
+succesfull migration without affecting users we needed to integrate Terraform with
+what is already in place at AWS.
 
 ## Requirements
 
-In order to follow alone this example, we need to create some resources in AWS to have a
-small but similar environment to what we had when we started working in this project.
+In order to follow along this example, you need to create some resources in AWS to have a
+similar environment to be used by Terraform, representative of what we had at the beggining
+of this project.
 
 - An AWS Account
 - 1 VPC [ In this example: vpc-1329f474]
@@ -29,22 +30,24 @@ small but similar environment to what we had when we started working in this pro
 
 ### What is Terraform?
 
-Terraform is a tool for building, maintain, and versioning infrastructure safely and efficiently. Terraform can manage existing and popular service providers as well as custom in-house solutions.
+Terraform is a tool for building, maintain, and versioning infrastructure (As code) safely and 
+efficiently, it can manage existing and popular service providers as well as custom in-house 
+solutions.
 
 ### Terraform Configuration
 
-*Note* for the sake of this article, we did a few small modifications on the Terraform
-code so anyone can follow alone this guide.
+*Note* for the sake of this article, we did a few small modifications Terraform code so anyone
+can follow along this guide.
 
-First of, head over [moving-to-terraform](https://github.com/abednarik/moving-to-terraform) Github repository. All the files
+First, head over [moving-to-terraform](https://github.com/flugel-it/moving-to-terraform) Github repository. All the files
 involved in this article are there.
-If you prefer to read this in *Spanish* there is a [moving-to-terraform](https://github.com/abednarik/moving-to-terraform/README_es.md) file there.
+If you prefer to read this in *Spanish* there is a [moving-to-terraform](https://github.com/flugel-it/moving-to-terraform/README_es.md) file there as well.
 
-In Terraform, the first thing we need to do is to create same variables. As you may know, variables
-store information we will use everywhere. Defining a variable is quite simple.
-In this case, we define a *aws_ami* variable, we set a description and finally a default value.
-Note that *default* is set since we plan to use the same AMI in all environments and clusters,
-is probably one of the few variables we want to have exactly the same in all environments.
+In Terraform, the first thing we need to do is to create same variables. As you might know, variables
+store information that we will use everywhere later on, defining a variable is quite simple.
+In this case, we defined a *aws_ami* variable, set a description for it and finally a default value.
+Note that *default* is set since we plan to use the same AMI in all the environments and clusters,
+it's probably one of the few variables we want to have with the exact same value in all environments.
 
 ```
 variable "aws_ami" {
@@ -53,13 +56,12 @@ variable "aws_ami" {
 }
 ```
 
-I choose to store variables in a dedicated file [variables.tf](https://github.com/abednarik/moving-to-terraform/blob/master/variables.tf). Please, have
-a look at the file and get familiar with it.
+I choose to store variables in a dedicated file [variables.tf](https://github.com/flugel-it/moving-to-terraform/blob/master/variables.tf). Please, have a look to the file and be familiar with it.
 
-Now, let get started with the [main.tf](https://github.com/abednarik/moving-to-terraform/blob/master/main.tf).
-here is where we set all the resources we plan to use in AWS.
-First, we define the provider. Terraform supports multiple providers, Like AWS Web Services, DigitalOcean,
-Azure, Google Cloud, OpenStack and others.
+Now, let's get started with [main.tf](https://github.com/flugel-it/moving-to-terraform/blob/master/main.tf).
+here's where we set all the resources we plan to use in our cloud environment.
+First, we define the provider, Terraform supports multiple providers, like AWS, OpenStack, DigitalOcean,
+ Google Cloud, Azure and others.
 
 Here we set the provider and the AWS region defined in *variables.tf* to place our resources there:
 
@@ -69,17 +71,24 @@ provider "aws" {
 }
 ```
 
-Next we need to set some security groups. Terraform has plenty of resources. The way to define a resource
-is to use the following format: *resource*  *"resource_type"* *"resource_name"* where *resource_type*
-is the actual resource we want to configure, in this case *aws_security_group* and *resource_name*
-is the name we want to assign to to later reference in our Terraform configuration. Finally
-inside the resource definition we set the configuration for that resource.
+Next we need to set some Security Groups. Terraform has plenty of resources, Security Groups is one of them. 
+The way to define a resource is to use the following format: 
 
-Here a complete resource, a Security Group for our Elastic Load Balancer. As you can see, we use
-a variable *${var.environment}* to include in the Name and also in the Tag. This allow us to reuse
-the same code for different environment, just changing a simple variable.
-Creating a Security Group is straight forward, we allow HTTP public traffic and everything inside
-our vpc *${var.vpc_id}*
+```
+resource "resource_type" "resource_name" {
+[...]
+}
+```
+
+where *resource_type* is the actual resource we want to configure, in this case *aws_security_group* and *resource_name*
+is the name we want to assign to to later reference in our Terraform configuration. Finally
+inside the brackets are the resource definitions to configure it.
+
+Here's a complete resource example, a Security Group for our Elastic Load Balancer. As you can see, we use
+*${var.environment}* as value in both Name and Tag definitions. This allow us to reuse
+the same code for differents environments by just changing a simple variable.
+Creating a Security Group is straight forward, we allow HTTP public traffic and all traffic inside
+our vpc *${var.vpc_id}*.
 
 ```
 resource "aws_security_group" "elb-sg" {
@@ -108,22 +117,20 @@ resource "aws_security_group" "elb-sg" {
 }
 ```
 
-After that we need to create the actual ELB. Here there are a few things to have a look:
+After that, we create the actual ELB. Here there are a few things to look at:
 
-- *security_groups*: As you can see here we use _${aws_security_group.elb-sg.id}_
-this mean that terraform will peak the Security Group created above dynamically
-and attach that to our ELB.
-- *subnets*: Note that we are using brackets, which means this is a list of multiple
-values. Since we have more than one subnet, we want to make sure that ELB can peak
-instances in any subnet inside our VPC.
-- *listener*: This block is where we define protocols and ports for both the ELB and for each
-Instance.
-- *health_check*: Here we set how we can validate that our instances are working properly
-doing a simple HTTP health check
+- *security_groups*: When using _${aws_security_group.elb-sg.id}_ terraform can select
+the Security Group dynamically and attach that to our ELB.
+- *subnets*: Note that we are using brackets here, which means this is a list of values. 
+Since we have more than one subnet, we want to make sure that ELB can choose instances in 
+any subnet inside our VPC.
+- *listener*: Ddefines protocols and ports for both the ELB and for each Instance.
+- *health_check*: Sets the way we validate that our instances are working properly, in this
+case just with a simple HTTP check.
 
 And finally the last block to setup some values for the ELB, the most important one is
-*cross_zone_load_balancing* to distribute incoming traffic evenly between all instances
-no matters in which zone they are located.
+*cross_zone_load_balancing* that distributes incoming traffic evenly between all instances
+no matter the zone they are located in.
 
 ```
 resource "aws_elb" "web-elb" {
@@ -158,16 +165,16 @@ resource "aws_elb" "web-elb" {
 
 ```
 
-Now is time to define the Launch Configuration. This is basically what do you run when a new
-instance is triggered in an autoscaling action.
+Now is time to define the Launch Configuration. This is what runs when a new instance is triggered in 
+from an autoscaling action.
 A few important things to remark here:
-- *name_prefix*: Since launch configuration cannot be overwritten or updated every time we want
-to change something, we use a name prefix, so every time we change something a new launch configuration
-will be created.
-- *user_data*: This is the template where we handle our data/script to setup each instance. later
+- *name_prefix*: Launch configuration cannot be overwritten or updated every time we want
+to change something in it, so we use a name prefix, thus every time something is changed a new launch 
+configuration will be created dinamically.
+- *user_data*: This is the template where we put our data or script to setup each instance, later on
 I will show you a simple shell script to do so.
-- *lifecycle*: Since launch configuration are unique, we want to make sure that a new configuration
-is created before deleting the previous one.
+- *lifecycle*: Since launch configurations cannot be modified, we make sure to create a new configuration
+before deleting the previous one.
 
 ```
 
@@ -187,7 +194,7 @@ resource "aws_launch_configuration" "web-lc" {
 ```
 
 In order to complete our launch process we need to define a template_file to load our custom script.
-Here a simple example to do that
+Here's an example:
 
 ```
 resource "template_file" "bootstrap" {
@@ -204,12 +211,12 @@ resource "template_file" "bootstrap" {
 }
 ```
 
-Now is time to create an *autoscaling_group* to take advantage of this great future of AWS.
-This together with a CloudWatch Alert will allow our stack to grow when there is more traffic
-and scale down and save some costs when there is no need to have too much resources.
-As you can see here we reference our previous created *launch_configuration*, we use our *VPC*
-and *subnets* and we set the desired number of instances, together with the limits of maximum and
-minimum instances.
+Now is time to create an *autoscaling_group* taking advantage of this great AWS feature,
+together with CloudWatch Alerts our stack can grow up and and shrink down accordingly with 
+the traffic, keeping costs down.
+As you can see here we reference our previous created *launch_configuration*, using our *VPC*
+and *subnets*, and setting the desired number of instances along with their maximum and minimum
+numbers.
 
 
 ```
@@ -236,11 +243,10 @@ resource "aws_autoscaling_group" "web-asg" {
 }
 ```
 
-Finally we need a Security Group for each instance. As you can see this is quite simple
-and similar to the Security Group created for the ELB. We allow HTTP and SSH access from
-everywhere.
-This is just fine  for this example, but I *highly recommend* only allowing ssh from inside
-you VPC and using a jump host to get access to your Infrastructure.
+Finally we need a Security Group for each instance, simple enough sine it's similar to the 
+Security Group created previously for the ELB. Allowing HTTP and SSH access from everywhere.
+This is just fine for an example, but I *highly recommend* only allowing SSH from inside
+you VPC and using a Bastion Host to access to your Infrastructure.
 
 
 ```
@@ -280,18 +286,18 @@ resource "aws_security_group" "default" {
 
 ### Running Terraform
 
-Now that Terraform configuration is complete, is time to run it and create all the resources in AWS.
+Now that Terraform configuration is complete, it's time to run it and create all the resources in AWS.
 
-- First export your AWS Credentials, replace *XXX* and *YYY* with the actual keys :)
+- First, export environment variables with your AWS Credentials, replace *XXX* and *YYY* with the actual keys ;)
 
 ```
 export AWS_ACCESS_KEY_ID=XXX
 export AWS_SECRET_ACCESS_KEY=YYY
 ```
 
-- Create a .tfvars file with your current data. Her e we set the values for each variable defined.
+- Create a .tfvars file with your current data there we set the values for each variable.
 I always use the environment name for this file, to reuse the same Terraform configuration for multiple environments.
-[This][https://github.com/abednarik/moving-to-terraform/blob/master/variables.tf] is the one created for this guide.
+[This][https://github.com/flugel-it/moving-to-terraform/blob/master/variables.tf] is the one created for this guide.
 Just replace this values with your our data.
 
 ```
@@ -306,14 +312,14 @@ asg_max = "2"
 asg_desired = "1"
 ```
 
-- Verify Terraform code and show which resources will be created
+- Verify Terraform code and show which resources are going to be created
 
 ```
 terraform  plan -var-file example.tfvars
 ```
 
-Is always a good idea to use *terraform plan* before actually running it, since we can see all the
-modification we are about to execute and also to validate the code.
+It's always a good idea to use *terraform plan* before actually applying the changes, since we can see all the
+modifications beforehand and also to validate the code.
 
 - Run Terraform
 
@@ -321,13 +327,10 @@ modification we are about to execute and also to validate the code.
 terraform  apply -var-file example.tfvars
 ```
 
-This will take a while since we are using a small AWS Instance that is free to use. Wait a few minutes
-until the instance is ready. You can check this using AWS Console.
-If everything went well, you should get at the end what we have in [outputs.tf][https://github.com/abednarik/moving-to-terraform/blob/master/outputs.tf].
-We use this file to show details of created resources, in this case the ELB fqdn, in my case is:
-*elb-web-example-213959227.us-east-1.elb.amazonaws.com*
-You can verify our stack is working using curl or wget like this:
-
+This might take a while since we are using a free AWS Instance, so wait a few minutes
+until the instance is ready, you can check for that using AWS' Console.
+If everything went well, by the end of the output you should get something like we have in [outputs.tf][https://github.com/flugel-it/moving-to-terraform/blob/master/outputs.tf].
+Pointing to ELB's FQDN you can verify our stack is working using _curl_ or _wget_ like so:
 
 ```
 curl -v elb-web-example-213959227.us-east-1.elb.amazonaws.com
@@ -341,7 +344,7 @@ wget -O -  -S elb-web-example-213959227.us-east-1.elb.amazonaws.com
 
 Excellent! Terraform is working :D
 
-- Finally destroy everything we created
+- Now we destroy everything we have created.
 
 ```
 terraform  destroy -var-file example.tfvars
@@ -351,9 +354,9 @@ Type *yes* when terraform ask for confirmation.
 
 ## Configuration Management and Automation
 
-As I already mention here we use just a simple shell script. Ideally instead of just installing
-Nginx, in thu user data you will have something to install your desired software like SaltStack, Chef
-or Puppet, set a role and deploy tour instance. Here is a small snippet on how we do it with Saltstack.
+As I mentioned we used a simple shell script, ideally instead of just installing Nginx, in the user data 
+you will have something to install your orchestration software so choice like, SaltStack, Chef, Ansible, 
+Puppet, etc. Here's is a small snippet of how we do it with Saltstack.
 
 ```
 apt-get update
@@ -370,5 +373,8 @@ salt-call state.highstate
 
 ## Conclusion
 
-Terraform is probably one of the best tools out there to handle resources in Cloud Providers.
-Is easy, well documented, there are examples everywhere and works great :)
+Terraform is probably one of the best tools out there to handle resources in the Cloud.
+It's straightforward to use and understand, well documented, there are examples everywhere and works like a charm :),
+what else can you ask for?.
+Now you have no excuse to not to start using it!.
+Happy hacking.
