@@ -355,7 +355,7 @@ Type *yes* when terraform ask for confirmation.
 ## Configuration Management and Automation
 
 As I mentioned we used a simple shell script, ideally instead of just installing Nginx, in the user data 
-you will have something to install your orchestration software so choice like, SaltStack, Chef, Ansible, 
+you will have something to install your orchestration software of choice like, SaltStack, Chef, Ansible, 
 Puppet, etc. Here's is a small snippet of how we do it with Saltstack.
 
 ```
