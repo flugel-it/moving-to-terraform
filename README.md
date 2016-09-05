@@ -243,7 +243,7 @@ resource "aws_autoscaling_group" "web-asg" {
 }
 ```
 
-Finally we need a Security Group for each instance, simple enough sine it's similar to the 
+Finally we need a Security Group for each instance, simple enough since it's similar to the 
 Security Group created previously for the ELB. Allowing HTTP and SSH access from everywhere.
 This is just fine for an example, but I *highly recommend* only allowing SSH from inside
 you VPC and using a Bastion Host to access to your Infrastructure.
